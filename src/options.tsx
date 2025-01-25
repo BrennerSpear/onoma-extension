@@ -2,76 +2,48 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 const Options = () => {
-  const [color, setColor] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
-  const [like, setLike] = useState<boolean>(false);
+  const [displayFormat, setDisplayFormat] = useState<string>("full");
 
   useEffect(() => {
-    // Restores select box and checkbox state using the preferences
-    // stored in chrome.storage.
     chrome.storage.sync.get(
-      {
-        favoriteColor: "red",
-        likesColor: true,
-      },
-      (items) => {
-        setColor(items.favoriteColor);
-        setLike(items.likesColor);
-      }
+      { displayFormat: "full" },
+      (items) => setDisplayFormat(items.displayFormat)
     );
   }, []);
 
   const saveOptions = () => {
-    // Saves options to chrome.storage.sync.
-    chrome.storage.sync.set(
-      {
-        favoriteColor: color,
-        likesColor: like,
-      },
-      () => {
-        // Update status to let user know options were saved.
-        setStatus("Options saved.");
-        const id = setTimeout(() => {
-          setStatus("");
-        }, 1000);
-        return () => clearTimeout(id);
-      }
-    );
+    chrome.storage.sync.set({ displayFormat }, () => {
+      alert("Options saved!");
+    });
   };
 
   return (
-    <>
-      <div>
-        Favorite color: <select
-          value={color}
-          onChange={(event) => setColor(event.target.value)}
-        >
-          <option value="red">red</option>
-          <option value="green">green</option>
-          <option value="blue">blue</option>
-          <option value="yellow">yellow</option>
-        </select>
-      </div>
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={like}
-            onChange={(event) => setLike(event.target.checked)}
-          />
-          I like colors.
-        </label>
-      </div>
-      <div>{status}</div>
+    <div>
+      <h2>Name Display Options</h2>
+      <label>
+        <input
+          type="radio"
+          value="full"
+          checked={displayFormat === "full"}
+          onChange={(e) => setDisplayFormat(e.target.value)}
+        />
+        Full Name (First Middle Last)
+      </label>
+      <br />
+      <label>
+        <input
+          type="radio"
+          value="initials"
+          checked={displayFormat === "initials"}
+          onChange={(e) => setDisplayFormat(e.target.value)}
+        />
+        Initials Only (F.M.L.)
+      </label>
+      <br />
       <button onClick={saveOptions}>Save</button>
-    </>
+    </div>
   );
 };
 
 const root = createRoot(document.getElementById("root")!);
-
-root.render(
-  <React.StrictMode>
-    <Options />
-  </React.StrictMode>
-);
+root.render(<Options />);
