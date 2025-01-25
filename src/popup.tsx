@@ -13,14 +13,6 @@ const Popup = () => {
   const toggleExtension = () => {
     chrome.storage.sync.set({ enabled: !enabled }, () => {
       setEnabled(!enabled);
-      // Send message to all tabs to update content
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(tab => {
-          if (tab.id) {
-            chrome.tabs.sendMessage(tab.id, { type: 'ONOMA_TOGGLE_ENABLED' });
-          }
-        });
-      });
     });
   };
 
