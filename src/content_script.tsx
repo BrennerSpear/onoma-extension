@@ -12,17 +12,54 @@ chrome.storage.sync.get(['enabled'], function (settings) {
 
   /**
    * Attempts to find a full Ethereum address from an element's context
-   * Currently checks for addresses in anchor href paths like /account/0x...
+   * Checks for addresses in:
+   * 1. data-* attributes that might contain addresses
+   * 2. anchor href paths like /account/0x... or /address/0x...
    */
   const findFullAddress = (element: Element): string | null => {
-    const anchorParent = element.closest('a');
-    if (!anchorParent?.getAttribute('href')) return null;
+    // First check all data attributes for a full address
+    const dataAttrs = ['data-address', 'data-account', 'data-wallet'];
+    for (const attr of dataAttrs) {
+      const dataValue = element.getAttribute(attr);
+      if (dataValue && validAddressRegex.test(dataValue)) {
+        return dataValue;
+      }
+    }
 
-    const href = anchorParent.getAttribute('href')!;
-    if (!href.includes('/account/')) return null;
+    // Then check parent elements recursively up to 3 levels
+    let current: Element | null = element;
+    let depth = 0;
+    while (current && depth < 3) {
+      // Check data attributes on parent elements
+      for (const attr of dataAttrs) {
+        const dataValue = current.getAttribute(attr);
+        if (dataValue && validAddressRegex.test(dataValue)) {
+          return dataValue;
+        }
+      }
 
-    const lastPart = href.split('/').pop();
-    return validAddressRegex.test(lastPart!) ? lastPart! : null;
+      // Check for anchor tags with address in href
+      if (current.tagName === 'A') {
+        const href = current.getAttribute('href');
+        if (href) {
+          // Match common patterns for Ethereum addresses in URLs
+          const patterns = ['/account/', '/address/', '/0x'];
+          for (const pattern of patterns) {
+            if (href.includes(pattern)) {
+              const lastPart = href.split(pattern).pop()?.split('/').shift();
+              if (lastPart && validAddressRegex.test(lastPart)) {
+                return lastPart;
+              }
+            }
+          }
+        }
+      }
+
+      current = current.parentElement;
+      depth++;
+    }
+
+    return null;
   };
 
   /**
@@ -35,8 +72,14 @@ chrome.storage.sync.get(['enabled'], function (settings) {
     const nodeValue = node.nodeValue?.trim();
     if (!nodeValue?.includes('0x')) return;
 
+    // Handle full addresses (0x + 40 hex chars)
+    if (validAddressRegex.test(nodeValue)) {
+      const nameObject = addressToNameObject(nodeValue);
+      node.nodeValue = formatFullName(nameObject);
+    }
+
     // Handle abbreviated addresses (0x1234...5678)
-    if (validAbbreviatedAddressRegex.test(nodeValue)) {
+    else if (validAbbreviatedAddressRegex.test(nodeValue)) {
       const parentElement = node.parentElement;
       if (!parentElement) return;
 
@@ -56,11 +99,7 @@ chrome.storage.sync.get(['enabled'], function (settings) {
         node.nodeValue = nodeValue.replace(currentAbbrev, name);
       }
     } 
-    // Handle full addresses (0x + 40 hex chars)
-    else if (validAddressRegex.test(nodeValue)) {
-      const nameObject = addressToNameObject(nodeValue);
-      node.nodeValue = formatFullName(nameObject);
-    }
+
   };
 
   /**
