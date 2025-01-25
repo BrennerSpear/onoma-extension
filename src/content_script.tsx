@@ -135,9 +135,16 @@ chrome.storage.sync.get(['enabled'], function (settings) {
     }
   });
 
-  // Start observing the entire document for changes
   observer.observe(document.body, {
     childList: true,
     subtree: true,
+  });
+
+  // Listen for settings changes from the extension popup
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'ONOMA_TOGGLE_ENABLED') {
+      // Re-process the entire page with new settings
+      processTextNodes(document.body);
+    }
   });
 });
