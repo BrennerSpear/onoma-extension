@@ -13,16 +13,24 @@ chrome.storage.sync.get(['enabled'], function (settings) {
   /**
    * Attempts to find a full Ethereum address from an element's context
    * Checks for addresses in:
-   * 1. data-* attributes that might contain addresses
-   * 2. anchor href paths like /account/0x... or /address/0x...
+   * 1. title attribute
+   * 2. data-* attributes that might contain addresses
+   * 3. anchor href paths like /account/0x... or /address/0x...
    */
   const findFullAddress = (element: Element): string | null => {
-    // First check all data attributes for a full address
-    const dataAttrs = ['data-address', 'data-account', 'data-wallet'];
-    for (const attr of dataAttrs) {
-      const dataValue = element.getAttribute(attr);
-      if (dataValue && validAddressRegex.test(dataValue)) {
-        return dataValue;
+    // Check title attribute first
+    const title = element.getAttribute('title');
+    if (title && validAddressRegex.test(title)) {
+      return title;
+    }
+
+    // Check all data-* attributes for a full address
+    for (const attr of element.getAttributeNames()) {
+      if (attr.startsWith('data-')) {
+        const dataValue = element.getAttribute(attr);
+        if (dataValue && validAddressRegex.test(dataValue)) {
+          return dataValue;
+        }
       }
     }
 
@@ -30,11 +38,19 @@ chrome.storage.sync.get(['enabled'], function (settings) {
     let current: Element | null = element;
     let depth = 0;
     while (current && depth < 3) {
-      // Check data attributes on parent elements
-      for (const attr of dataAttrs) {
-        const dataValue = current.getAttribute(attr);
-        if (dataValue && validAddressRegex.test(dataValue)) {
-          return dataValue;
+      // Check title attribute on parent
+      const parentTitle = current.getAttribute('title');
+      if (parentTitle && validAddressRegex.test(parentTitle)) {
+        return parentTitle;
+      }
+
+      // Check all data-* attributes on parent elements
+      for (const attr of current.getAttributeNames()) {
+        if (attr.startsWith('data-')) {
+          const dataValue = current.getAttribute(attr);
+          if (dataValue && validAddressRegex.test(dataValue)) {
+            return dataValue;
+          }
         }
       }
 
@@ -83,13 +99,21 @@ chrome.storage.sync.get(['enabled'], function (settings) {
       const parentElement = node.parentElement;
       if (!parentElement) return;
 
+      // First try to find full address from data attributes
       const fullAddress = findFullAddress(parentElement);
+      
+      // If no full address found in data attributes, try to reconstruct from siblings
+      const siblingFullAddress = !fullAddress && parentElement.parentElement ? 
+        Array.from(parentElement.parentElement.querySelectorAll('[data-highlight-target]'))
+          .map(el => el.getAttribute('data-highlight-target'))
+          .find(addr => addr && validAddressRegex.test(addr)) : null;
+
       const currentAbbrev = nodeValue.match(validAbbreviatedAddressRegex)?.[0];
       if (!currentAbbrev) return;
 
-      if (fullAddress) {
+      if (fullAddress || siblingFullAddress) {
         // If we found the full address in context, use it for better name generation
-        const nameObject = addressToNameObject(fullAddress);
+        const nameObject = addressToNameObject(fullAddress || siblingFullAddress!);
         const name = formatFullName(nameObject);
         node.nodeValue = nodeValue.replace(currentAbbrev, name);
       } else {

@@ -19,12 +19,13 @@
     "default_title": "Onoma Names"
   },
   "options_ui": {
-    "page": "options.html"
+    "page": "options.html",
+    "open_in_tab": true
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["js/vendor.js", "js/content_script.js"]
+      "js": ["js/react_vendor.js", "js/onoma_vendor.js", "js/content_script.js"]
     }
   ],
   "host_permissions": ["<all_urls>"]

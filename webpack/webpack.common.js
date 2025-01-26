@@ -15,9 +15,19 @@ module.exports = {
     },
     optimization: {
         splitChunks: {
-            name: "vendor",
-            chunks: "all"
-        },
+            cacheGroups: {
+                react_vendor: {
+                    test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+                    name: 'react_vendor',
+                    chunks: 'all'
+                },
+                onoma_vendor: {
+                    test: /[\\/]node_modules[\\/](onoma|@faker-js)[\\/]/,
+                    name: 'onoma_vendor',
+                    chunks: (chunk) => chunk.name === 'content_script'
+                }
+            }
+        }
     },
     module: {
         rules: [
