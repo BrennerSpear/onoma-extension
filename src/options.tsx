@@ -5,9 +5,8 @@ const Options = () => {
   const [displayFormat, setDisplayFormat] = useState<string>("full");
 
   useEffect(() => {
-    chrome.storage.sync.get(
-      { displayFormat: "full" },
-      (items) => setDisplayFormat(items.displayFormat)
+    chrome.storage.sync.get({ displayFormat: "full" }, (items) =>
+      setDisplayFormat(items.displayFormat)
     );
   }, []);
 

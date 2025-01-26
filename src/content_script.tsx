@@ -1,13 +1,20 @@
-import { addressToNameObject, validAddressRegex, validAbbreviatedAddressRegex, NameObject } from "onoma";
+import {
+  addressToNameObject,
+  validAddressRegex,
+  validAbbreviatedAddressRegex,
+  NameObject,
+} from "onoma";
 
-chrome.storage.sync.get(['enabled'], function (settings) {
+chrome.storage.sync.get(["enabled"], function (settings) {
   if (!settings.enabled) return;
 
   // Format helpers for consistent name display
-  const formatFullName = (nameObject: NameObject) => 
-    `${nameObject.firstName} ${nameObject.middleName.charAt(0).toUpperCase()}. ${nameObject.lastName}`;
-  
-  const formatAbbreviatedName = (nameObject: NameObject) => 
+  const formatFullName = (nameObject: NameObject) =>
+    `${nameObject.firstName} ${nameObject.middleName
+      .charAt(0)
+      .toUpperCase()}. ${nameObject.lastName}`;
+
+  const formatAbbreviatedName = (nameObject: NameObject) =>
     `${nameObject.firstName} ${nameObject.lastName}`;
 
   /**
@@ -19,14 +26,14 @@ chrome.storage.sync.get(['enabled'], function (settings) {
    */
   const findFullAddress = (element: Element): string | null => {
     // Check title attribute first
-    const title = element.getAttribute('title');
+    const title = element.getAttribute("title");
     if (title && validAddressRegex.test(title)) {
       return title;
     }
 
     // Check all data-* attributes for a full address
     for (const attr of element.getAttributeNames()) {
-      if (attr.startsWith('data-')) {
+      if (attr.startsWith("data-")) {
         const dataValue = element.getAttribute(attr);
         if (dataValue && validAddressRegex.test(dataValue)) {
           return dataValue;
@@ -39,14 +46,14 @@ chrome.storage.sync.get(['enabled'], function (settings) {
     let depth = 0;
     while (current && depth < 3) {
       // Check title attribute on parent
-      const parentTitle = current.getAttribute('title');
+      const parentTitle = current.getAttribute("title");
       if (parentTitle && validAddressRegex.test(parentTitle)) {
         return parentTitle;
       }
 
       // Check all data-* attributes on parent elements
       for (const attr of current.getAttributeNames()) {
-        if (attr.startsWith('data-')) {
+        if (attr.startsWith("data-")) {
           const dataValue = current.getAttribute(attr);
           if (dataValue && validAddressRegex.test(dataValue)) {
             return dataValue;
@@ -55,14 +62,14 @@ chrome.storage.sync.get(['enabled'], function (settings) {
       }
 
       // Check for anchor tags with address in href
-      if (current.tagName === 'A') {
-        const href = current.getAttribute('href');
+      if (current.tagName === "A") {
+        const href = current.getAttribute("href");
         if (href) {
           // Match common patterns for Ethereum addresses in URLs
-          const patterns = ['/account/', '/address/', '/0x'];
+          const patterns = ["/account/", "/address/", "/0x"];
           for (const pattern of patterns) {
             if (href.includes(pattern)) {
-              const lastPart = href.split(pattern).pop()?.split('/').shift();
+              const lastPart = href.split(pattern).pop()?.split("/").shift();
               if (lastPart && validAddressRegex.test(lastPart)) {
                 return lastPart;
               }
@@ -86,7 +93,7 @@ chrome.storage.sync.get(['enabled'], function (settings) {
    */
   const processNode = (node: Node) => {
     const nodeValue = node.nodeValue?.trim();
-    if (!nodeValue?.includes('0x')) return;
+    if (!nodeValue?.includes("0x")) return;
 
     // Handle full addresses (0x + 40 hex chars)
     if (validAddressRegex.test(nodeValue)) {
@@ -101,19 +108,27 @@ chrome.storage.sync.get(['enabled'], function (settings) {
 
       // First try to find full address from data attributes
       const fullAddress = findFullAddress(parentElement);
-      
+
       // If no full address found in data attributes, try to reconstruct from siblings
-      const siblingFullAddress = !fullAddress && parentElement.parentElement ? 
-        Array.from(parentElement.parentElement.querySelectorAll('[data-highlight-target]'))
-          .map(el => el.getAttribute('data-highlight-target'))
-          .find(addr => addr && validAddressRegex.test(addr)) : null;
+      const siblingFullAddress =
+        !fullAddress && parentElement.parentElement
+          ? Array.from(
+              parentElement.parentElement.querySelectorAll(
+                "[data-highlight-target]"
+              )
+            )
+              .map((el) => el.getAttribute("data-highlight-target"))
+              .find((addr) => addr && validAddressRegex.test(addr))
+          : null;
 
       const currentAbbrev = nodeValue.match(validAbbreviatedAddressRegex)?.[0];
       if (!currentAbbrev) return;
 
       if (fullAddress || siblingFullAddress) {
         // If we found the full address in context, use it for better name generation
-        const nameObject = addressToNameObject(fullAddress || siblingFullAddress!);
+        const nameObject = addressToNameObject(
+          fullAddress || siblingFullAddress!
+        );
         const name = formatFullName(nameObject);
         node.nodeValue = nodeValue.replace(currentAbbrev, name);
       } else {
@@ -122,8 +137,7 @@ chrome.storage.sync.get(['enabled'], function (settings) {
         const name = formatAbbreviatedName(nameObject);
         node.nodeValue = nodeValue.replace(currentAbbrev, name);
       }
-    } 
-
+    }
   };
 
   /**
@@ -144,12 +158,12 @@ chrome.storage.sync.get(['enabled'], function (settings) {
   // Set up observer for dynamic content changes
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.type === 'childList') {
+      if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           // Process new elements and their text nodes
           if (node.nodeType === Node.ELEMENT_NODE) {
             processTextNodes(node);
-          } 
+          }
           // Process new text nodes directly
           else if (node.nodeType === Node.TEXT_NODE) {
             processNode(node);
