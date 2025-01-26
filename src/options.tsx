@@ -2,45 +2,52 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 const Options = () => {
-  const [displayFormat, setDisplayFormat] = useState<string>("full");
+  // const [displayFormat, setDisplayFormat] = useState<string>("full");
 
-  useEffect(() => {
-    chrome.storage.sync.get({ displayFormat: "full" }, (items) =>
-      setDisplayFormat(items.displayFormat)
-    );
-  }, []);
+  // useEffect(() => {
+  //   chrome.storage.sync.get({ displayFormat: "full" }, (items) =>
+  //     setDisplayFormat(items.displayFormat)
+  //   );
+  // }, []);
 
-  const saveOptions = () => {
-    chrome.storage.sync.set({ displayFormat }, () => {
-      alert("Options saved!");
-    });
-  };
+  // const saveOptions = () => {
+  //   chrome.storage.sync.set({ displayFormat }, () => {
+  //     alert("Options saved!");
+  //   });
+  // };
 
   return (
     <div>
-      <h2>Name Display Options</h2>
-      <label>
-        <input
-          type="radio"
-          value="full"
-          checked={displayFormat === "full"}
-          onChange={(e) => setDisplayFormat(e.target.value)}
-        />
-        Full Name (First Middle Last)
-      </label>
-      <br />
-      <label>
-        <input
-          type="radio"
-          value="initials"
-          checked={displayFormat === "initials"}
-          onChange={(e) => setDisplayFormat(e.target.value)}
-        />
-        Initials Only (F.M.L.)
-      </label>
-      <br />
-      <button onClick={saveOptions}>Save</button>
+      <h2>Future Options can go here</h2>
+      <p>
+        Some ideas: customize name format (full, initials, etc.), default color,
+        language, which websites it loads on, if it shows 0x on hover
+      </p>
     </div>
+    // <div>
+    //   <h2>Name Display Options</h2>
+    //   <label>
+    //     <input
+    //       type="radio"
+    //       value="full"
+    //       checked={displayFormat === "full"}
+    //       onChange={(e) => setDisplayFormat(e.target.value)}
+    //     />
+    //     Full Name (First Middle Last)
+    //   </label>
+    //   <br />
+    //   <label>
+    //     <input
+    //       type="radio"
+    //       value="initials"
+    //       checked={displayFormat === "initials"}
+    //       onChange={(e) => setDisplayFormat(e.target.value)}
+    //     />
+    //     Initials Only (F.M.L.)
+    //   </label>
+    //   <br />
+    //   <button onClick={saveOptions}>Save</button>
+    // </div>
   );
 };
 
