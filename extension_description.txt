@@ -1,0 +1,10 @@
+Onoma is a Chrome extension designed to enhance the readability of Ethereum wallet addresses by assigning them human-readable names. Inspired by Metagame's mission to make blockchain transactions more user-friendly, Onoma ensures that even wallet addresses without an ENS (Ethereum Name Service) association are easier to recognize and remember.
+
+Why is it called Onoma?
+The name "Onoma" originates from "onomastics," the study of the history and origins of proper names, particularly personal names. This reflects Onoma's purpose: giving every Ethereum wallet a name, making blockchain interactions more intuitive.
+
+How It Works
+When enabled, Onoma scans web pages for Ethereum wallet addresses (e.g., "0x08...8DdF") and replaces them with unique, deterministic names. Whether you're navigating dApps, checking blockchain explorers, or managing transactions, Onoma provides an effortless way to associate wallet addresses with easy-to-remember names.
+
+Fully Open Source
+Onoma and the Onoma Extension are fully open source, allowing you to contribute to its development and improve its functionality. You can find the source code on GitHub: https://github.com/brennerspear/onoma-extension

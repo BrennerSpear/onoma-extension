@@ -4,6 +4,7 @@ import {
   validAbbreviatedAddressRegex,
   NameObject,
 } from "onoma";
+import { findFullAddress } from "./utils/dom";
 
 chrome.storage.sync.get(["enabled"], function (settings) {
   if (!settings.enabled) return;
@@ -16,74 +17,6 @@ chrome.storage.sync.get(["enabled"], function (settings) {
 
   const formatAbbreviatedName = (nameObject: NameObject) =>
     `${nameObject.firstName} ${nameObject.lastName}`;
-
-  /**
-   * Attempts to find a full Ethereum address from an element's context
-   * Checks for addresses in:
-   * 1. title attribute
-   * 2. data-* attributes that might contain addresses
-   * 3. anchor href paths like /account/0x... or /address/0x...
-   */
-  const findFullAddress = (element: Element): string | null => {
-    // Check title attribute first
-    const title = element.getAttribute("title");
-    if (title && validAddressRegex.test(title)) {
-      return title;
-    }
-
-    // Check all data-* attributes for a full address
-    for (const attr of element.getAttributeNames()) {
-      if (attr.startsWith("data-")) {
-        const dataValue = element.getAttribute(attr);
-        if (dataValue && validAddressRegex.test(dataValue)) {
-          return dataValue;
-        }
-      }
-    }
-
-    // Then check parent elements recursively up to 3 levels
-    let current: Element | null = element;
-    let depth = 0;
-    while (current && depth < 3) {
-      // Check title attribute on parent
-      const parentTitle = current.getAttribute("title");
-      if (parentTitle && validAddressRegex.test(parentTitle)) {
-        return parentTitle;
-      }
-
-      // Check all data-* attributes on parent elements
-      for (const attr of current.getAttributeNames()) {
-        if (attr.startsWith("data-")) {
-          const dataValue = current.getAttribute(attr);
-          if (dataValue && validAddressRegex.test(dataValue)) {
-            return dataValue;
-          }
-        }
-      }
-
-      // Check for anchor tags with address in href
-      if (current.tagName === "A") {
-        const href = current.getAttribute("href");
-        if (href) {
-          // Match common patterns for Ethereum addresses in URLs
-          const patterns = ["/account/", "/address/", "/0x"];
-          for (const pattern of patterns) {
-            if (href.includes(pattern)) {
-              const lastPart = href.split(pattern).pop()?.split("/").shift();
-              if (lastPart && validAddressRegex.test(lastPart)) {
-                return lastPart;
-              }
-            }
-          }
-        }
-      }
-
-      current = current.parentElement;
-      depth++;
-    }
-
-    return null;
-  };
 
   /**
    * Process a single text node to replace Ethereum addresses with human-readable names
